@@ -1,0 +1,118 @@
+#!/bin/bash
+### BEGIN INIT INFO
+# Provides:          x11vnc
+# Required-Start:    $remote_fs $syslog
+# Required-Stop:     $remote_fs $syslog
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: Start x11vnc at boot time
+# Description:       Start x11vnc at boot time
+### END INIT INFO
+
+PATH=/sbin:/usr/sbin:/bin:/usr/bin
+
+# Function to check the status of x11vnc
+status() {
+    if pgrep -x "x11vnc" > /dev/null; then
+        echo "x11vnc is running."
+    else
+        echo "x11vnc is not running."
+    fi
+}
+
+case "$1" in
+  start)
+    /usr/bin/x11vnc -forever -shared -display :0 -rfbauth /path/to/authfile
+    ;;
+  stop)
+    pkill x11vnc
+    ;;
+  status)
+    status
+    ;;
+  *)
+    echo "Usage: /etc/init.d/x11vnc {start|stop|status}"
+    exit 1
+    ;;
+esac
+
+exit 0
+
+/usr/bin/x11vnc -auth guess -forever -loop -noxdamage -repeat  -rfbport 5900 -shared
+
+# ##################################################################
+# Script Name : vnc-startup.sh
+# Description : Perform an automated install of X11Vnc
+#               Configure it to run at startup of the machine            
+# Date : Feb 2016
+# Written by : Griffon 
+# Web Site :http://www.c-nergy.be - http://www.c-nergy.be/blog
+# Version : 1.0
+#
+# Disclaimer : Script provided AS IS. Use it at your own risk....
+#
+# #################################################################
+
+# Step 1 - Install X11VNC  
+# ################################################################# 
+sudo apt-get install x11vnc -y
+
+# Step 2 - Specify Password to be used for VNC Connection 
+# ################################################################# 
+
+sudo x11vnc -storepasswd /etc/x11vnc.pass
+
+
+# Step 3 - Create the Service Unit File
+# ################################################################# 
+
+cat > /lib/systemd/system/x11vnc.service << EOF
+[Unit]
+Description=Start x11vnc at startup.
+After=multi-user.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/x11vnc -auth guess -forever -loop -noxdamage -repeat -rfbauth /etc/x11vnc.pass -rfbport 5900 -shared
+
+ExecStart=/usr/bin/x11vnc -auth guess -forever -loop -noxdamage -repeat -rfbport 5900 -shared -display :1
+## ###
+/usr/bin/x11vnc -auth guess -forever -loop -noxdamage -repeat -rfbport 5900 -shared -display :1 
+#########
+
+ExecStart=/usr/bin/x11vnc -auth guess -forever -loop -noxdamage -repeat -rfbport 5900 -shared -display :1
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+# Step 4 -Configure the Service 
+# ################################################################ 
+
+echo "Configure Services"
+sudo systemctl enable x11vnc.service
+sudo systemctl daemon-reload
+
+sleep  5s
+sudo shutdown -r now
+
+
+##=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+$HOME/.vnc/xstartup
+#!/bin/bash
+
+xrdb $HOME/.Xresources
+
+# Check if GNOME is installed and start it if available
+#exec gnome-session
+#exec startxfce4
+exec startlxde
+#exec xterm
+
+#########
+COMMANDS TO START
+vncserver :1
+95000:9501
+localhost binding
+
+
